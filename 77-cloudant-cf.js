@@ -264,10 +264,10 @@ module.exports = function(RED) {
                         });
                     }
                     else if (node.search === "_all_") {
-                        options.include_docs = options.include_docs || true;
-
-                        db.list(options, function(err, body) {
-                            sendDocumentOnPayload(err, body, msg);
+                        
+                    	options.selector = options.selector || msg.payload;
+                    	db.find(options.selector, function(er, result) {
+                    		sendDocumentOnPayload(err, body, msg);
                         });
                     }
                 });
