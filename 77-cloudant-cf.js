@@ -113,8 +113,8 @@ module.exports = function(RED) {
 		function createDatabase(cloudant, node) {
 			cloudant.db.list(function(err, all_dbs) {
 				if (err) {
-					if (err.status_code === 403) {
-						// if err.status_code is 403 then we are probably using
+					if (err.statusCode === 403) {
+						// if err.statusCode is 403 then we are probably using
 						// an api key, so we can assume the database already exists
 						return;
 					}
@@ -205,8 +205,8 @@ module.exports = function(RED) {
 		function insertDocument(cloudant, node, doc, attempts, callback) {
 			var db = cloudant.use(node.database);
 			db.insert(doc, function(err, body) {
-				if (err && err.status_code === 404 && attempts > 0) {
-					// status_code 404 means the database was not found
+				if (err && err.statusCode === 404 && attempts > 0) {
+					// statusCode 404 means the database was not found
 					return cloudant.db.create(db.config.db, function() {
 						insertDocument(cloudant, node, doc, attempts - 1, callback);
 					});
