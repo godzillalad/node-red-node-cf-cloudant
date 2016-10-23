@@ -20,16 +20,30 @@ To **insert** a new document into the database you have the option to store
 the entire `msg` object or just the `msg.payload`. If the input value is not
 in JSON format, it will be transformed before being stored.
 
+
 For **update** and **delete**, you must pass the `_id` and the `_rev`as part
 of the input `msg` object.
 
-To **search** for a document you have two options: get a document directly by
-its `_id` or use an existing [search index](https://cloudant.com/for-developers/search/)
-from the database. For both cases, the query should be passed in the
-`msg.payload` input object as a string.
 
+To **find** a document you have four options: 
+
+Note: the query/selector should be passed in the `msg.payload` input object as a string.
+
+**_id**: get a document directly by its `_id`
 When getting documents by id, the `payload` will be the desired `_id` value.
+
+**search**: use an existing [search index](https://cloudant.com/for-developers/search/)from the database. 
 For `search indexes`, the query should follow the format `indexName:value`.
+
+**query**: search using generic json query [cloudant query](https://docs.cloudant.com/cloudant_query.html)
+For `query` the selector can determine the returned fields 
+
+```{   "selector": {   "id": 213 },    "fields": [     "id",     "name",   "email",     "_id"   ] }```
+
+**all**: return all documents 
+
+
+
 
 Authors
 -------

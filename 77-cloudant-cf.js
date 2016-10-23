@@ -240,7 +240,9 @@ module.exports = function(RED) {
         };
 
         Cloudant(credentials, function(err, cloudant) {
-            if (err) { node.error(err.description, err); }
+            if (err) {
+            	node.error(err.description, err); 
+            }
             else {
                 node.on("input", function(msg) {
                     var db = cloudant.use(node.database);
@@ -264,10 +266,44 @@ module.exports = function(RED) {
                         });
                     }
                     else if (node.search === "_all_") {
-                        
-                    	options.selector = options.selector || msg.payload;
-                    	db.find(options.selector, function(er, result) {
-                    		sendDocumentOnPayload(err, body, msg);
+                    	 options.include_docs = options.include_docs || true;
+
+                         db.list(options, function(err, body) {
+                             sendDocumentOnPayload(err, body, msg);
+                         });
+                    }
+                    else if (node.search === "_query_") {
+                        options.selector = options.selector || JSON.parse(msg.payload);
+                    	db.find(options.selector, function(err, body) {
+                    		console.log("err",err);
+                    		if (!err) {
+                                msg.cloudant = body;
+
+                                console.log("body",body);
+                                
+                                if ("docs" in body) {
+                                    msg.payload = body.docs;
+                                } else {
+                                    msg.payload = body;
+                                }
+                            }
+                            else {
+                                msg.payload = null;
+
+                                console.log("err",err);
+                                if (err.description === "missing") {
+                                    node.warn(
+                                        "Document '" + node.inputId +
+                                        "' not found in database '" + node.database + "'.",
+                                        err
+                                    );
+                                } else {
+                                	node.error(err.description, err);
+                                	node.error(err.message, err);
+                                }
+                            }
+
+                            node.send(msg);
                         });
                     }
                 });
