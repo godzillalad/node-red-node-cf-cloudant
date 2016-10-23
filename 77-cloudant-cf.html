@@ -286,10 +286,13 @@
         A node for searching documents in a Cloudant database.
     </p>
     <p>
-        Searching for documents can be done in three modes: directly by using the
-        document's <b>_id</b>, by using an existing <a
-        href="https://cloudant.com/for-developers/search/" target="_blank">Search
-        Index</a> or retrieving <b>all documents</b> stored in your database.
+        Searching for documents can be done in four modes: 
+		<ol>
+			<li>directly by using the document's <b>_id</b></li>
+			<li>by using an existing <a href="https://cloudant.com/for-developers/search/" target="_blank">Search Index</a></li>
+			<li>by using a Lucene type <a href="https://docs.cloudant.com/cloudant_query.html" target="_blank">Query</a> on an existing index</li>
+			<li>by retrieving <b>all documents</b> stored in your database</li>
+		</ol>
     </p>
     <p>
         When querying using the <b>_id</b> option, the value for the document's
