@@ -288,19 +288,19 @@
     <p>
         Searching for documents can be done in four modes: 
 		<ol>
-			<li>directly by using the document's <b>_id</b></li>
-			<li>by using an existing <a href="https://cloudant.com/for-developers/search/" target="_blank">Search Index</a></li>
-			<li>by using a Lucene type <a href="https://docs.cloudant.com/cloudant_query.html" target="_blank">Query</a> on an existing index</li>
-			<li>by retrieving <b>all documents</b> stored in your database</li>
+			<li><b>_id</b> fetch specific object based on _id</li>
+			<li><b>Search</b> by using an existing <a href="https://cloudant.com/for-developers/search/" target="_blank">Search Index</a></li>
+			<li><b>Query - This is the easiest</b> <a href="https://docs.cloudant.com/cloudant_query.html" target="_blank">Generic Query</a> on an existing index</li>
+			<li><b>all documents</b> stored in your database</li>
 		</ol>
     </p>
     <p>
-        When querying using the <b>_id</b> option, the value for the document's
+        <b>1. </b> When querying using the <b>_id</b> option, the value for the document's
         <code>_id</code> should be passed in the <code>msg.payload</code> as a
         string.
     </p>
     <p>
-        To use an existing <b>Search Index</b> stored on the desired database,
+        <b>2. </b>To use an existing <b>Search Index</b> stored on the desired database,
         the query argument should be passed on the <code>msg.payload</code> as a
         string following the <code>indexName:value</code> pattern. Keep in mind
         that <i>the index must be created beforehand in the database.</i> and
@@ -321,8 +321,17 @@
         href="https://docs.cloudant.com/api.html?http#queries" target="_blank">
         official Cloudant documentation</a>.
     </p>
+
+	<p>
+		<b>3. </b>Cloudant query allows for Lucene type searches on existing DB indexes.
+
+		<br>The simplest index is <code>{  "type": "text",  "index": {} }</code> which will index all fields in all documents
+
+		<br>A sample query selector to return document with id '213' and displaying the provided fields  <code> {   "selector": {   "id": 213 },    "fields": [     "id",     "name",   "email",     "_id"   ] }</code>
+    </p>
+
     <p>
-        The last method to retrieve documents is to simply get all of them by
+		<b>4. </b>The last method to retrieve documents is to simply get all of them by
         selecting the option <b>all documents</b>.
     </p>
     <p>
