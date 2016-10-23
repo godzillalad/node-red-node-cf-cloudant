@@ -49,3 +49,4 @@ Authors
 -------
 * Luiz Gustavo Ferraz Aoqui - [laoqui@ca.ibm.com](mailto:laoqui@ca.ibm.com)
 * Túlio Pascoal
+* Shane Lynch - [godzillalad](https://github.com/godzillalad)
