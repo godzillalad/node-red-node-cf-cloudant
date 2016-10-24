@@ -79,12 +79,17 @@ module.exports = function(RED) {
 			}
 		}
 	});
+	
+	
+	
+	
 
 	function CloudantOutNode(n) {
 		RED.nodes.createNode(this, n);
 
 		this.operation = n.operation;
 		this.payonly = n.payonly || false;
+		this.updateall = n.updateall || false;
 		this.database = _cleanDatabaseName(n.database, this);
 		this.cloudantConfig = _getCloudantConfig(n);
 
@@ -99,12 +104,16 @@ module.exports = function(RED) {
 		Cloudant(credentials, function(err, cloudant) {
 			if (err) {
 				node.error(err.message, err);
+//				node.status({fill:"red",shape:"ring",text:"disconnected"});
 			} else {
+//				node.status({fill:"green",shape:"dot",text:"connected"});
+				
 				// check if the database exists and create it if it doesn't
 				createDatabase(cloudant, node);
 
 				node.on("input", function(msg) {
 					delete msg._msgid;
+					
 					handleMessage(cloudant, node, msg);
 				});
 			}
@@ -133,10 +142,11 @@ module.exports = function(RED) {
 
 		function handleMessage(cloudant, node, msg) {
 			if (node.operation === "insert") {
+				
 				var msg = node.payonly ? msg.payload : msg;
 				var root = node.payonly ? "payload" : "msg";
 				var doc = parseMessage(msg, root);
-
+				
 				insertDocument(cloudant, node, doc, MAX_ATTEMPTS, function(err, body) {
 					if (err) {
 						console.trace();
@@ -144,7 +154,26 @@ module.exports = function(RED) {
 						node.error("Failed to insert document: " + err.message, msg);
 					}
 				});
-			} else if (node.operation === "delete") {
+				
+			}else if (node.operation === "update") {
+				
+				// Get the selector
+				var selectorField = msg.selector || JSON.parse(msg.payload).selector;
+				var selector = {"selector" : selectorField };
+
+				// Node option to only use the msg.payload to update 
+				var storeObject = node.payonly ? msg.payload : msg;
+				storeObject = JSON.parse(storeObject);
+				
+				if(typeof(selectorField) == 'undefined' || typeof(storeObject) == 'undefined'){
+					
+					node.error("Are you passing a selector: '"+ selectorField +"' and object to store: '"+ storeObject+"'")
+				}
+				else{
+					updateFields(cloudant, node, selector, storeObject);
+				}
+				
+			}else if (node.operation === "delete") {
 				var doc = parseMessage(msg.payload || msg, "");
 
 				if ("_rev" in doc && "_id" in doc) {
@@ -159,6 +188,95 @@ module.exports = function(RED) {
 					node.error(err.message, msg);
 				}
 			}
+		}
+		
+		function updateFields(cloudant, node, selector, storeObject) {
+			
+			/**
+			 * Update a field in the document in the specified DB using a query to find the object
+			 * If multiple documents match the update all documents
+			 * 
+			 * this update will only be additive it will maintain the original documents fields. 
+			 * 
+			 * Update will modify an existing object or objects. The query to select objects to update uses msg.selector and the update to the element uses msg.payload
+			 * Update can add a object if it does not exist or update multiple objects.
+			 * 
+			 */
+
+			var db = cloudant.use(node.database);
+			
+			db.find(selector, function(err, body) {
+				if (!err) {
+				
+					console.log("Selector matched documents", selector);
+					
+					var docsToModify = [];
+					
+					// For each document now search for fields and start replacing them with an insert
+					// Note to update individual fileds the whole pobject including _rev, _id are needed before we insert
+					if ("docs" in body) {
+
+						if (node.updateall){
+							// In a single update the entire DB could be modified
+							// This may be desired so it's wrapped in a "are you really sure" option
+							// Were here now and decided to update everything so remove the _id and _rev
+							
+							if (typeof(storeObject._id) != 'undefined'){
+								delete storeObject._id;
+							}
+							
+							if (typeof(storeObject._rev) != 'undefined'){
+								delete storeObject._rev;
+							}
+							
+							// Clone all of the found docs
+							docsToModify = (JSON.parse(JSON.stringify(body.docs)));
+							
+						}else if(typeof(storeObject._id) != 'undefined'){
+						
+							console.log("Update specific doc defined in the msg.payload : " , storeObject._id);
+							
+							docsToModify = body.docs.filter(function( doc ) {
+								  return doc._id == storeObject._id;
+							});	
+						}
+						
+						// iterate through docs updating their fields with those in message.payload
+						var updateCount = 0;
+						docsToModify.forEach(function(doc){
+							updateCount ++;
+							// clone the doc
+							var updateDoc = (JSON.parse(JSON.stringify(doc)));
+							
+							// Merge in the new fields using assign
+							updateDoc =  Object.assign(updateDoc, storeObject);
+							
+							console.log("Merging the two docs into new doc and insert into DB: ", updateDoc);
+							insertDocument(cloudant, node, updateDoc, MAX_ATTEMPTS, function(err, body) {
+								if (err) {
+									console.trace();
+									console.log(node.error.toString());
+									node.error("Failed to insert document: " + err.message, msg);
+								}									
+							});
+						});
+						
+						node.log("Number of Document to update:  '"+updateCount+"'");
+						
+					}else{
+						node.warn("No documents matched the selector: ", selector);
+					}
+						
+				} else {
+					console.log("Error querying using selector : ", err);
+					if (err.message === "missing") {
+						node.warn("Document '" + node.inputId + "' not found in database '" + node.database + "'.", err);
+					} else {
+						node.error(err.description, err);
+						node.error(err.message, err);
+					}
+				}
+			});
 		}
 
 		function parseMessage(msg, root) {

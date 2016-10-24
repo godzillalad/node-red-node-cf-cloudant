@@ -21,7 +21,18 @@ the entire `msg` object or just the `msg.payload`. If the input value is not
 in JSON format, it will be transformed before being stored.
 
 
-For **update** and **delete**, you must pass the `_id` and the `_rev`as part
+For **update** it will modify an existing object or objects  
+The query to find objects to update uses msg.selector and the update to the element uses msg.payload.
+
+if `msg.selector` is missing it will try to use a specific `msg.payload.selector` from the msg.payload but this will be stored in the document
+
+The msg.payload and existing objects will be merged.
+
+Update can add a object if it does not exist or update multiple objects.
+
+`Update ALL` means all documents that match the selector will be updated. _id and _rev are stripped from msg.payload
+
+For **delete**, you must pass the `_id` and the `_rev`as part
 of the input `msg` object.
 
 
