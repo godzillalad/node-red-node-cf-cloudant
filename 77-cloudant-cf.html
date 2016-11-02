@@ -82,11 +82,11 @@
                style="display: inline-block; width: auto; vertical-align: top;">
         <label for="node-input-payonly" style="width:65%;">Only store msg.payload object?</label>
     </div>
-	<div class="form-row node-input-updateall">
+	<div class="form-row node-input-removeidentifiers">
         <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-updateall" placeholder="UpdateAll"
+        <input type="checkbox" id="node-input-removeidentifiers" placeholder="RemoveIdentifiers"
                style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-updateall" style="width:65%;">Update All can wreck your DB are you sure this is desired behaviour?</label>
+        <label for="node-input-removeidentifiers" style="width:65%;">Remove Identifiers : Remove fields  (_id, _rev) from msg.payload so the update will match all documents that the selector matches. This can wreck your DB are you sure this is desired behaviour?</label>
     </div>
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
@@ -97,14 +97,14 @@
             var id = $("#node-input-operation option:selected").val();
             if (id == "delete") {
 				$(".node-input-payonly").hide();
-				$(".node-input-updateall").hide();
+				$(".node-input-removeidentifiers").hide();
 			}else if (id == "update") {
 				$(".node-input-payonly").show();
-				$(".node-input-updateall").show();
+				$(".node-input-removeidentifiers").show();
 			}
             else {
 				$(".node-input-payonly").show();
-				$(".node-input-updateall").hide();
+				$(".node-input-removeidentifiers").hide();
 			}
         });
 
@@ -159,7 +159,7 @@
             database: { value:"", required:true, validate:validateDatabase },
             service: { value:"", required:true },
             payonly: { value:false },
-            updateall: { value:false },
+            removeidentifiers: { value:false },
             operation: { value:"insert" }
         },
         inputs: 1,
@@ -271,11 +271,10 @@
        checkbox in the configuration window.
    </p>
    <p>
-       If you want to <b>update</b> an existing document you must specify the
-       latest values for <code>_id</code> and <code>_rev</code> in your object.
-       If they don't match the current values stored in the database you will
-       receive a <b>conflict error</b> message, so make sure you are using the
-       most updated information for the document.
+       For <b>update</b> the node can modify an existing document or documents  
+       </br>update uses <code>msg.selector</code> to match documents in the database, then will merge the matched documents with the object in <code>msg.payload</code>.
+       </br>if <code>msg.selector</code> is missing it will try to use <code>msg.payload.selector</code> a side affect is that the selector will be stored in the document.
+       </br>Checking <b>Update ALL</b> means all documents matching the selector will be updated. <code>_id</code> and <code>_rev</code> are stripped from msg.payload
     </p>
     <p>
         It is also possible to <b>delete</b> documents from the database by
@@ -342,9 +341,9 @@
     </p>
 
 	<p>
-		<b>3. </b>Cloudant query allows for Lucene type searches on existing DB indexes.
+		<b>3. </b>Cloudant <b>Query<\b> runs a cloudant.db.find using existing indexes on the Cloudant database.
 
-		<br>The simplest index is <code>{  "type": "text",  "index": {} }</code> which will index all fields in all documents
+		<br>The simplest index is <code>{  "type": "text",  "index": {} }</code> which will index all fields in all documents allowinf for Lucene type searches.
 
 		<br>A sample query selector to return document with id '213' and displaying the provided fields  <code> {   "selector": {   "id": 213 },    "fields": [     "id",     "name",   "email",     "_id"   ] }</code>
     </p>

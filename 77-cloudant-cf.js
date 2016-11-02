@@ -89,7 +89,7 @@ module.exports = function(RED) {
 
 		this.operation = n.operation;
 		this.payonly = n.payonly || false;
-		this.updateall = n.updateall || false;
+		this.removeidentifiers = n.removeidentifiers || false;
 		this.database = _cleanDatabaseName(n.database, this);
 		this.cloudantConfig = _getCloudantConfig(n);
 
@@ -210,13 +210,15 @@ module.exports = function(RED) {
 				
 					console.log("Selector matched documents", selector);
 					
-					var docsToModify = [];
+					
+					// Clone all of the found docs
+					var docsToModify = (JSON.parse(JSON.stringify(body.docs)));
 					
 					// For each document now search for fields and start replacing them with an insert
 					// Note to update individual fileds the whole pobject including _rev, _id are needed before we insert
 					if ("docs" in body) {
 
-						if (node.updateall){
+						if (node.removeidentifiers){
 							// In a single update the entire DB could be modified
 							// This may be desired so it's wrapped in a "are you really sure" option
 							// Were here now and decided to update everything so remove the _id and _rev
@@ -229,13 +231,13 @@ module.exports = function(RED) {
 								delete storeObject._rev;
 							}
 							
-							// Clone all of the found docs
-							docsToModify = (JSON.parse(JSON.stringify(body.docs)));
-							
-						}else if(typeof(storeObject._id) != 'undefined'){
+						}
 						
-							console.log("Update specific doc defined in the msg.payload : " , storeObject._id);
+						if(typeof(storeObject._id) != 'undefined'){
+							// If the msg.payload._id is still present we need to match it 
+							console.log("_id passed in msg.payload so trying to match with doc matched with selector: " , storeObject._id);
 							
+							// Only modify the single doc if _id is passed
 							docsToModify = body.docs.filter(function( doc ) {
 								  return doc._id == storeObject._id;
 							});	
@@ -243,6 +245,7 @@ module.exports = function(RED) {
 						
 						// iterate through docs updating their fields with those in message.payload
 						var updateCount = 0;
+						
 						docsToModify.forEach(function(doc){
 							updateCount ++;
 							// clone the doc

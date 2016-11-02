@@ -21,7 +21,7 @@ the entire `msg` object or just the `msg.payload`. If the input value is not
 in JSON format, it will be transformed before being stored.
 
 
-For **update** it will modify an existing object or objects  
+For **update** it will modify an existing document or documentss  
 The query to find objects to update uses msg.selector and the update to the element uses msg.payload.
 
 if `msg.selector` is missing it will try to use a specific `msg.payload.selector` from the msg.payload but this will be stored in the document
